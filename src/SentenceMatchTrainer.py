@@ -22,7 +22,7 @@ def collect_vocabs(train_path, with_POS=False, with_NER=False):
     all_NERs = None
     if with_POS: all_POSs = set()
     if with_NER: all_NERs = set()
-    infile = open(train_path, 'rt')
+    infile = open(train_path, 'rt', encoding='utf-8')
     for line in infile:
         line = line.strip()
         if line.startswith('-'): continue
@@ -50,7 +50,7 @@ def collect_vocabs(train_path, with_POS=False, with_NER=False):
 
 def evaluate(dataStream, valid_graph, sess, outpath=None, label_vocab=None, mode='prediction',
              char_vocab=None, POS_vocab=None, NER_vocab=None):
-    if outpath is not None: outfile = open(outpath, 'wt')
+    if outpath is not None: outfile = open(outpath, 'wt', encoding='utf-8')
     total_tags = 0.0
     correct_tags = 0.0
     dataStream.reset()
