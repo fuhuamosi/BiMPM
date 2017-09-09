@@ -302,6 +302,7 @@ def main(_):
         max_steps = train_size * FLAGS.max_epochs
         total_loss = 0.0
         start_time = time.time()
+        start_time_2 = time.time()
         for step in range(max_steps):
             # read data
             cur_batch = trainDataStream.nextBatch()
@@ -345,7 +346,9 @@ def main(_):
             total_loss += loss_value
 
             if step % 100 == 0:
-                print('{} '.format(step), end="")
+                duration_2 = time.time() - start_time_2
+                start_time_2 = time.time()
+                print('step {} %.3f sec'.format(step, duration_2), end="")
                 sys.stdout.flush()
 
             # Save a checkpoint and evaluate the model periodically.
