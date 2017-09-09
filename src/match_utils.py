@@ -9,7 +9,7 @@ def cosine_distance(y1, y2):
     # y1 [....,a, 1, d]
     # y2 [....,1, b, d]
     #     cosine_numerator = T.sum(y1*y2, axis=-1)
-    cosine_numerator = tf.reduce_sum(tf.mul(y1, y2), axis=-1)
+    cosine_numerator = tf.reduce_sum(tf.multiply(y1, y2), axis=-1)
     #     y1_norm = T.sqrt(T.maximum(T.sum(T.sqr(y1), axis=-1), eps)) #be careful while using
     # T.sqrt(), like in the cases of Euclidean distance, cosine similarity, for the gradient of
     # T.sqrt() at 0 is undefined, we should add an Eps or use T.maximum(original, eps) in the sqrt.
@@ -33,8 +33,8 @@ def mask_relevancy_matrix(relevancy_matrix, question_mask, passage_mask):
     # relevancy_matrix: [batch_size, passage_len, question_len]
     # question_mask: [batch_size, question_len]
     # passage_mask: [batch_size, passsage_len]
-    relevancy_matrix = tf.mul(relevancy_matrix, tf.expand_dims(question_mask, 1))
-    relevancy_matrix = tf.mul(relevancy_matrix, tf.expand_dims(passage_mask, 2))
+    relevancy_matrix = tf.multiply(relevancy_matrix, tf.expand_dims(question_mask, 1))
+    relevancy_matrix = tf.multiply(relevancy_matrix, tf.expand_dims(passage_mask, 2))
     return relevancy_matrix
 
 
@@ -47,8 +47,9 @@ def cal_cosine_weighted_question_representation(question_representation, cosine_
                                             axis=-1)  # [batch_size, passage_len, question_len, 'x']
     weighted_question_words = tf.expand_dims(question_representation,
                                              axis=1)  # [batch_size, 'x', question_len, dim]
-    weighted_question_words = tf.reduce_sum(tf.mul(weighted_question_words, expanded_cosine_matrix),
-                                            axis=2)  # [batch_size, passage_len, dim]
+    weighted_question_words = tf.reduce_sum(
+        tf.multiply(weighted_question_words, expanded_cosine_matrix),
+        axis=2)  # [batch_size, passage_len, dim]
     if not normalize:
         weighted_question_words = tf.div(weighted_question_words, tf.expand_dims(
             tf.add(tf.reduce_sum(cosine_matrix, axis=-1), eps), axis=-1))
@@ -59,18 +60,19 @@ def multi_perspective_expand_for_3D(in_tensor, decompose_params):
     in_tensor = tf.expand_dims(in_tensor, axis=2)  # [batch_size, passage_len, 'x', dim]
     decompose_params = tf.expand_dims(tf.expand_dims(decompose_params, axis=0),
                                       axis=0)  # [1, 1, decompse_dim, dim]
-    return tf.mul(in_tensor, decompose_params)  # [batch_size, passage_len, decompse_dim, dim]
+    return tf.multiply(in_tensor,
+                            decompose_params)  # [batch_size, passage_len, decompse_dim, dim]
 
 
 def multi_perspective_expand_for_2D(in_tensor, decompose_params):
     in_tensor = tf.expand_dims(in_tensor, axis=1)  # [batch_size, 'x', dim]
     decompose_params = tf.expand_dims(decompose_params, axis=0)  # [1, decompse_dim, dim]
-    return tf.mul(in_tensor, decompose_params)  # [batch_size, decompse_dim, dim]
+    return tf.multiply(in_tensor, decompose_params)  # [batch_size, decompse_dim, dim]
 
 
 def multi_perspective_expand_for_1D(in_tensor, decompose_params):
     in_tensor = tf.expand_dims(in_tensor, axis=0)  # ['x', dim]
-    return tf.mul(in_tensor, decompose_params)  # [decompse_dim, dim]
+    return tf.multiply(in_tensor, decompose_params)  # [decompse_dim, dim]
 
 
 def cal_full_matching_bak(passage_representation, full_question_representation, decompose_params):
@@ -206,12 +208,12 @@ def cross_entropy(logits, truth, mask):
 
     #     xdev = x - x.max()
     #     return xdev - T.log(T.sum(T.exp(xdev)))
-    logits = tf.mul(logits, mask)
-    xdev = tf.sub(logits, tf.expand_dims(tf.reduce_max(logits, 1), -1))
-    log_predictions = tf.sub(xdev, tf.expand_dims(tf.log(tf.reduce_sum(tf.exp(xdev), -1)), -1))
+    logits = tf.multiply(logits, mask)
+    xdev = tf.subtract(logits, tf.expand_dims(tf.reduce_max(logits, 1), -1))
+    log_predictions = tf.subtract(xdev, tf.expand_dims(tf.log(tf.reduce_sum(tf.exp(xdev), -1)), -1))
     #     return -T.sum(targets * log_predictions)
-    result = tf.mul(tf.mul(truth, log_predictions), mask)  # [batch_size, passage_len]
-    return tf.mul(-1.0, tf.reduce_sum(result, -1))  # [batch_size]
+    result = tf.multiply(tf.multiply(truth, log_predictions), mask)  # [batch_size, passage_len]
+    return tf.multiply(-1.0, tf.reduce_sum(result, -1))  # [batch_size]
 
 
 def highway_layer(in_val, output_size, scope=None):
@@ -228,7 +230,7 @@ def highway_layer(in_val, output_size, scope=None):
         full_b = tf.get_variable("full_b", [output_size], dtype=tf.float32)
         trans = tf.nn.tanh(tf.nn.xw_plus_b(in_val, full_w, full_b))
         gate = tf.nn.sigmoid(tf.nn.xw_plus_b(in_val, highway_w, highway_b))
-        outputs = tf.add(tf.mul(trans, gate), tf.mul(in_val, tf.sub(1.0, gate)), "y")
+        outputs = tf.add(tf.multiply(trans, gate), tf.multiply(in_val, tf.subtract(1.0, gate)), "y")
     outputs = tf.reshape(outputs, [batch_size, passage_len, output_size])
     return outputs
 
@@ -236,7 +238,7 @@ def highway_layer(in_val, output_size, scope=None):
 def multi_highway_layer(in_val, output_size, num_layers, scope=None):
     scope_name = 'highway_layer'
     if scope is not None: scope_name = scope
-    for i in xrange(num_layers):
+    for i in range(num_layers):
         cur_scope_name = scope_name + "-{}".format(i)
         in_val = highway_layer(in_val, output_size, scope=cur_scope_name)
     return in_val
@@ -264,8 +266,8 @@ def cal_linear_decomposition_representation(passage_representation, passage_leng
     passage_similarity = tf.reduce_max(cosine_matrix, 2)  # [batch_size, passage_len]
     similar_weights = tf.expand_dims(passage_similarity, -1)  # [batch_size, passage_len, 1]
     dissimilar_weights = tf.subtract(1.0, similar_weights)
-    similar_component = tf.mul(passage_representation, similar_weights)
-    dissimilar_component = tf.mul(passage_representation, dissimilar_weights)
+    similar_component = tf.multiply(passage_representation, similar_weights)
+    dissimilar_component = tf.multiply(passage_representation, dissimilar_weights)
     all_component = tf.concat(2, [similar_component, dissimilar_component])
     if lex_decompsition_dim == -1:
         return all_component
@@ -301,14 +303,14 @@ def match_passage_with_question(passage_context_representation_fw,
         fw_question_full_rep = question_context_representation_fw[:, -1, :]
         bw_question_full_rep = question_context_representation_bw[:, 0, :]
 
-        question_context_representation_fw = tf.mul(question_context_representation_fw,
-                                                    tf.expand_dims(question_mask, -1))
-        question_context_representation_bw = tf.mul(question_context_representation_bw,
-                                                    tf.expand_dims(question_mask, -1))
-        passage_context_representation_fw = tf.mul(passage_context_representation_fw,
-                                                   tf.expand_dims(mask, -1))
-        passage_context_representation_bw = tf.mul(passage_context_representation_bw,
-                                                   tf.expand_dims(mask, -1))
+        question_context_representation_fw = tf.multiply(question_context_representation_fw,
+                                                         tf.expand_dims(question_mask, -1))
+        question_context_representation_bw = tf.multiply(question_context_representation_bw,
+                                                         tf.expand_dims(question_mask, -1))
+        passage_context_representation_fw = tf.multiply(passage_context_representation_fw,
+                                                        tf.expand_dims(mask, -1))
+        passage_context_representation_bw = tf.multiply(passage_context_representation_bw,
+                                                        tf.expand_dims(mask, -1))
 
         forward_relevancy_matrix = cal_relevancy_matrix(question_context_representation_fw,
                                                         passage_context_representation_fw)
@@ -443,7 +445,7 @@ def unidirectional_matching(in_question_repres, in_passage_repres, question_leng
         relevancy_degrees = tf.reduce_max(relevancy_matrix, axis=2)  # [batch_size, passage_len]
         relevancy_degrees = tf.expand_dims(relevancy_degrees,
                                            axis=-1)  # [batch_size, passage_len, 'x']
-        in_passage_repres = tf.mul(in_passage_repres, relevancy_degrees)
+        in_passage_repres = tf.multiply(in_passage_repres, relevancy_degrees)
 
     # =======Context Representation Layer & Multi-Perspective matching layer=====
     all_question_aware_representatins = []
@@ -477,7 +479,7 @@ def unidirectional_matching(in_question_repres, in_passage_repres, question_leng
             question_aware_dim += 2 * lex_decompsition_dim
 
     with tf.variable_scope('context_MP_matching'):
-        for i in xrange(context_layer_num):
+        for i in range(context_layer_num):
             with tf.variable_scope('layer-{}'.format(i)):
                 with tf.variable_scope('context_represent'):
                     # parameters
@@ -536,8 +538,8 @@ def unidirectional_matching(in_question_repres, in_passage_repres, question_leng
         all_question_aware_representatins = tf.nn.dropout(all_question_aware_representatins,
                                                           (1 - dropout_rate))
     else:
-        all_question_aware_representatins = tf.mul(all_question_aware_representatins,
-                                                   (1 - dropout_rate))
+        all_question_aware_representatins = tf.multiply(all_question_aware_representatins,
+                                                        (1 - dropout_rate))
 
     # ======Highway layer======
     if with_match_highway:
@@ -550,7 +552,7 @@ def unidirectional_matching(in_question_repres, in_passage_repres, question_leng
     aggregation_dim = 0
     aggregation_input = all_question_aware_representatins
     with tf.variable_scope('aggregation_layer'):
-        for i in xrange(aggregation_layer_num):
+        for i in range(aggregation_layer_num):
             with tf.variable_scope('layer-{}'.format(i)):
                 aggregation_lstm_cell_fw = tf.nn.rnn_cell.BasicLSTMCell(aggregation_lstm_dim)
                 aggregation_lstm_cell_bw = tf.nn.rnn_cell.BasicLSTMCell(aggregation_lstm_dim)
@@ -712,7 +714,7 @@ def bilateral_match_func2(in_question_repres, in_passage_repres,
             passage_aware_dim += MP_dim
 
     with tf.variable_scope('context_MP_matching'):
-        for i in xrange(context_layer_num):  # support multiple context layer
+        for i in range(context_layer_num):  # support multiple context layer
             with tf.variable_scope('layer-{}'.format(i)):
                 with tf.variable_scope('context_represent'):
                     # parameters
@@ -788,8 +790,9 @@ def bilateral_match_func2(in_question_repres, in_passage_repres,
         passage_aware_representatins = tf.nn.dropout(passage_aware_representatins,
                                                      (1 - dropout_rate))
     else:
-        question_aware_representatins = tf.mul(question_aware_representatins, (1 - dropout_rate))
-        passage_aware_representatins = tf.mul(passage_aware_representatins, (1 - dropout_rate))
+        question_aware_representatins = tf.multiply(question_aware_representatins,
+                                                    (1 - dropout_rate))
+        passage_aware_representatins = tf.multiply(passage_aware_representatins, (1 - dropout_rate))
 
     # ======Highway layer======
     if with_match_highway:
@@ -816,7 +819,7 @@ def bilateral_match_func2(in_question_repres, in_passage_repres,
     qa_aggregation_input = question_aware_representatins
     pa_aggregation_input = passage_aware_representatins
     with tf.variable_scope('aggregation_layer'):
-        for i in xrange(aggregation_layer_num):  # support multiple aggregation layer
+        for i in range(aggregation_layer_num):  # support multiple aggregation layer
             with tf.variable_scope('left_layer-{}'.format(i)):
                 aggregation_lstm_cell_fw = tf.nn.rnn_cell.BasicLSTMCell(aggregation_lstm_dim)
                 aggregation_lstm_cell_bw = tf.nn.rnn_cell.BasicLSTMCell(aggregation_lstm_dim)
