@@ -143,7 +143,8 @@ class Vocab(object):
         self.word_vecs = np.zeros((self.vocab_size + 1, self.word_dim),
                                   dtype=np.float32)  # the last dimension is all zero
         for cur_index in range(self.vocab_size):
-            self.word_vecs[cur_index] = word_vecs[cur_index]
+            if len(word_vecs[cur_index]) == 300:
+                self.word_vecs[cur_index] = word_vecs[cur_index]
 
     def fromText_bak(self, vec_path, voc=None):
         # load freq table and build index for each word
@@ -314,7 +315,8 @@ class Vocab(object):
             for i in range(len(word)):
                 cur_char = word[i]
                 idx = self.getIndex(cur_char)
-                if idx == None and self.__unk_mapping is not None and cur_char in self.__unk_mapping:
+                if idx == None and self.__unk_mapping is not None and cur_char in \
+                        self.__unk_mapping:
                     simWord = self.__unk_mapping[cur_char]
                     idx = self.getIndex(simWord)
                 if idx == None: idx = self.vocab_size

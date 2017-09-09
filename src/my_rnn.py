@@ -182,7 +182,7 @@ def _dynamic_rnn_loop(cell, inputs, initial_state, parallel_iterations, swap_mem
         swap_memory=swap_memory)
 
     # Unpack final output if not using output tuples.
-    final_outputs = tuple(ta.pack() for ta in output_final_ta)
+    final_outputs = tuple(ta.stack() for ta in output_final_ta)
 
     # Restore some shape information
     for output, output_size in zip(final_outputs, flat_output_size):

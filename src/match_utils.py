@@ -61,7 +61,7 @@ def multi_perspective_expand_for_3D(in_tensor, decompose_params):
     decompose_params = tf.expand_dims(tf.expand_dims(decompose_params, axis=0),
                                       axis=0)  # [1, 1, decompse_dim, dim]
     return tf.multiply(in_tensor,
-                            decompose_params)  # [batch_size, passage_len, decompse_dim, dim]
+                       decompose_params)  # [batch_size, passage_len, decompse_dim, dim]
 
 
 def multi_perspective_expand_for_2D(in_tensor, decompose_params):
@@ -125,8 +125,8 @@ def cal_maxpooling_matching_bak(passage_rep, question_rep, decompose_params):
     matching_matrix = cosine_distance(passage_rep,
                                       question_rep)  # [batch_size, passage_len, question_len,
     # decompse_dim]
-    return tf.concat(2, [tf.reduce_max(matching_matrix, axis=2), tf.reduce_mean(matching_matrix,
-                                                                                axis=2)])  # [
+    return tf.concat([tf.reduce_max(matching_matrix, axis=2), tf.reduce_mean(matching_matrix,
+                                                                             axis=2)], 2)  # [
     # batch_size, passage_len, 2*decompse_dim]
 
 
@@ -151,8 +151,8 @@ def cal_maxpooling_matching(passage_rep, question_rep, decompose_params):
     matching_matrix = tf.map_fn(singel_instance, elems,
                                 dtype=tf.float32)  # [batch_size, passage_len, question_len,
     # decompse_dim]
-    return tf.concat(2, [tf.reduce_max(matching_matrix, axis=2), tf.reduce_mean(matching_matrix,
-                                                                                axis=2)])  # [
+    return tf.concat([tf.reduce_max(matching_matrix, axis=2), tf.reduce_mean(matching_matrix,
+                                                                             axis=2)], 2)  # [
     # batch_size, passage_len, 2*decompse_dim]
 
 
@@ -173,8 +173,8 @@ def cal_maxpooling_matching_for_word(passage_rep, question_rep, decompose_params
             y = multi_perspective_expand_for_1D(y, decompose_params)  # [decompose_dim, dim]
             y = tf.expand_dims(y, 0)  # [1, decompose_dim, dim]
             matching_matrix = cosine_distance(y, q)  # [question_len, decompose_dim]
-            return tf.concat(0, [tf.reduce_max(matching_matrix, axis=0),
-                                 tf.reduce_mean(matching_matrix, axis=0)])  # [2*decompose_dim]
+            return tf.concat([tf.reduce_max(matching_matrix, axis=0),
+                              tf.reduce_mean(matching_matrix, axis=0)], 0)  # [2*decompose_dim]
 
         return tf.map_fn(single_instance_2, p, dtype=tf.float32)  # [passage_len, 2*decompse_dim]
 
@@ -268,7 +268,7 @@ def cal_linear_decomposition_representation(passage_representation, passage_leng
     dissimilar_weights = tf.subtract(1.0, similar_weights)
     similar_component = tf.multiply(passage_representation, similar_weights)
     dissimilar_component = tf.multiply(passage_representation, dissimilar_weights)
-    all_component = tf.concat(2, [similar_component, dissimilar_component])
+    all_component = tf.concat(axis=2, values=[similar_component, dissimilar_component])
     if lex_decompsition_dim == -1:
         return all_component
     with tf.variable_scope('lex_decomposition'):
@@ -286,7 +286,7 @@ def cal_linear_decomposition_representation(passage_representation, passage_leng
             lex_lstm_cell_fw, lex_lstm_cell_bw, all_component, dtype=tf.float32,
             sequence_length=passage_lengths)
 
-        lex_features = tf.concat(2, [lex_features_fw, lex_features_bw])
+        lex_features = tf.concat(axis=2, values=[lex_features_fw, lex_features_bw])
     return lex_features
 
 
@@ -502,8 +502,9 @@ def unidirectional_matching(in_question_repres, in_passage_repres, question_leng
                         dtype=tf.float32,
                         sequence_length=question_lengths)  # [batch_size, question_len,
                     # context_lstm_dim]
-                    in_question_repres = tf.concat(2, [question_context_representation_fw,
-                                                       question_context_representation_bw])
+                    in_question_repres = tf.concat(axis=2,
+                                                   values=[question_context_representation_fw,
+                                                           question_context_representation_bw])
 
                     # passage representation
                     tf.get_variable_scope().reuse_variables()
@@ -513,8 +514,8 @@ def unidirectional_matching(in_question_repres, in_passage_repres, question_leng
                         dtype=tf.float32,
                         sequence_length=passage_lengths)  # [batch_size, passage_len,
                     # context_lstm_dim]
-                    in_passage_repres = tf.concat(2, [passage_context_representation_fw,
-                                                      passage_context_representation_bw])
+                    in_passage_repres = tf.concat(axis=2, values=[passage_context_representation_fw,
+                                                                  passage_context_representation_bw])
 
                 # Multi-perspective matching
                 with tf.variable_scope('MP_matching'):
@@ -530,8 +531,8 @@ def unidirectional_matching(in_question_repres, in_passage_repres, question_leng
                     all_question_aware_representatins.extend(matching_vectors)
                     question_aware_dim += matching_dim
 
-    all_question_aware_representatins = tf.concat(2,
-                                                  all_question_aware_representatins)  # [
+    all_question_aware_representatins = tf.concat(axis=2,
+                                                  values=all_question_aware_representatins)  # [
     # batch_size, passage_len, dim]
 
     if is_training:
@@ -573,13 +574,13 @@ def unidirectional_matching(in_question_repres, in_passage_repres, question_leng
                 aggregation_representation.append(fw_rep)
                 aggregation_representation.append(bw_rep)
                 aggregation_dim += 2 * aggregation_lstm_dim
-                aggregation_input = tf.concat(2,
-                                              cur_aggregation_representation)  # [batch_size,
+                aggregation_input = tf.concat(axis=2,
+                                              values=cur_aggregation_representation)  # [batch_size,
                 # passage_len, 2*aggregation_lstm_dim]
 
     #
-    aggregation_representation = tf.concat(1,
-                                           aggregation_representation)  # [batch_size,
+    aggregation_representation = tf.concat(axis=1,
+                                           values=aggregation_representation)  # [batch_size,
     # aggregation_dim]
 
     # ======Highway layer======
@@ -646,7 +647,7 @@ def bilateral_match_func1(in_question_repres, in_passage_repres,
                     with_max_attentive_match=with_max_attentive_match)
                 match_representation.append(question_match_representation)
                 match_dim += question_match_dim
-    match_representation = tf.concat(1, match_representation)
+    match_representation = tf.concat(axis=1, values=match_representation)
     return (match_representation, match_dim)
 
 
@@ -737,8 +738,8 @@ def bilateral_match_func2(in_question_repres, in_passage_repres,
                         dtype=tf.float32,
                         sequence_length=question_lengths)  # [batch_size, question_len,
                     # context_lstm_dim]
-                    in_question_repres = tf.concat(2, [question_context_representation_fw,
-                                                       question_context_representation_bw])
+                    in_question_repres = tf.concat([question_context_representation_fw,
+                                                    question_context_representation_bw], 2)
 
                     # passage representation
                     tf.get_variable_scope().reuse_variables()
@@ -748,8 +749,8 @@ def bilateral_match_func2(in_question_repres, in_passage_repres,
                         dtype=tf.float32,
                         sequence_length=passage_lengths)  # [batch_size, passage_len,
                     # context_lstm_dim]
-                    in_passage_repres = tf.concat(2, [passage_context_representation_fw,
-                                                      passage_context_representation_bw])
+                    in_passage_repres = tf.concat([passage_context_representation_fw,
+                                                   passage_context_representation_bw], 2)
 
                 # Multi-perspective matching
                 with tf.variable_scope('left_MP_matching'):
@@ -777,11 +778,9 @@ def bilateral_match_func2(in_question_repres, in_passage_repres,
                     passage_aware_representatins.extend(matching_vectors)
                     passage_aware_dim += matching_dim
 
-    question_aware_representatins = tf.concat(2,
-                                              question_aware_representatins)  # [batch_size,
+    question_aware_representatins = tf.concat(question_aware_representatins, 2)  # [batch_size,
     # passage_len, question_aware_dim]
-    passage_aware_representatins = tf.concat(2,
-                                             passage_aware_representatins)  # [batch_size,
+    passage_aware_representatins = tf.concat(passage_aware_representatins, 2)  # [batch_size,
     # question_len, question_aware_dim]
 
     if is_training:
@@ -840,8 +839,7 @@ def bilateral_match_func2(in_question_repres, in_passage_repres,
                 aggregation_representation.append(fw_rep)
                 aggregation_representation.append(bw_rep)
                 aggregation_dim += 2 * aggregation_lstm_dim
-                qa_aggregation_input = tf.concat(2,
-                                                 cur_aggregation_representation)  # [batch_size,
+                qa_aggregation_input = tf.concat(cur_aggregation_representation, 2)  # [batch_size,
                 # passage_len, 2*aggregation_lstm_dim]
 
             with tf.variable_scope('right_layer-{}'.format(i)):
@@ -864,12 +862,10 @@ def bilateral_match_func2(in_question_repres, in_passage_repres,
                 aggregation_representation.append(fw_rep)
                 aggregation_representation.append(bw_rep)
                 aggregation_dim += 2 * aggregation_lstm_dim
-                pa_aggregation_input = tf.concat(2,
-                                                 cur_aggregation_representation)  # [batch_size,
+                pa_aggregation_input = tf.concat(cur_aggregation_representation, 2)  # [batch_size,
                 # passage_len, 2*aggregation_lstm_dim]
     #
-    aggregation_representation = tf.concat(1,
-                                           aggregation_representation)  # [batch_size,
+    aggregation_representation = tf.concat(aggregation_representation, 1)  # [batch_size,
     # aggregation_dim]
 
     # ======Highway layer======
