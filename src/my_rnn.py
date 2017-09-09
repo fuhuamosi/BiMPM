@@ -1,11 +1,5 @@
-
-
-
-
-from tensorflow.python.framework import constant_op
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import ops
-from tensorflow.python.framework import tensor_shape
 from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import control_flow_ops
 from tensorflow.python.ops import math_ops
@@ -15,8 +9,26 @@ from tensorflow.python.ops import variable_scope as vs
 from tensorflow.python.util import nest
 from tensorflow.python.ops import rnn
 import tensorflow as tf
+from tensorflow.python.framework import tensor_shape
 
-_state_size_with_prefix = rnn_cell._state_size_with_prefix
+
+def _state_size_with_prefix(state_size, prefix=None):
+    """Helper function that enables int or TensorShape shape specification.
+    This function takes a size specification, which can be an integer or a
+    TensorShape, and converts it into a list of integers. One may specify any
+    additional dimensions that precede the final state size specification.
+    Args:
+      state_size: TensorShape or int that specifies the size of a tensor.
+      prefix: optional additional list of dimensions to prepend.
+    Returns:
+      result_state_size: list of dimensions the resulting tensor size.
+    """
+    result_state_size = tensor_shape.as_shape(state_size).as_list()
+    if prefix is not None:
+        if not isinstance(prefix, list):
+            raise TypeError("prefix of _state_size_with_prefix should be a list.")
+        result_state_size = prefix + result_state_size
+    return result_state_size
 
 
 def _dynamic_rnn_loop(cell, inputs, initial_state, parallel_iterations, swap_memory,
@@ -110,7 +122,7 @@ def _dynamic_rnn_loop(cell, inputs, initial_state, parallel_iterations, swap_mem
     input_ta = tuple(
         _create_ta("input_%d" % i, flat_input[0].dtype) for i in range(len(flat_input)))
 
-    input_ta = tuple(ta.unpack(input_) for ta, input_ in zip(input_ta, flat_input))
+    input_ta = tuple(ta.unstack(input_) for ta, input_ in zip(input_ta, flat_input))
 
     def _time_step(time, output_ta_t, state):
         """Take a time step of the dynamic RNN.

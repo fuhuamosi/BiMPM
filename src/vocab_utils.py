@@ -424,7 +424,7 @@ def to_char_ngram_sequence(sentence, n=3):
 
 def collectVoc(trainpath):
     vocab = set()
-    inputFile = file(trainpath, 'rt')
+    inputFile = open(trainpath, 'rt')
     for line in inputFile:
         line = line.strip()
         label, sentence = re.split('\t', line)
@@ -483,7 +483,7 @@ def collect_word_count_with_max_vocab(sentences, max_vocab=600000):
 
 def read_all_sentences(inpath):
     all_sentences = []
-    in_file = file(inpath, 'rt')
+    in_file = open(inpath, 'rt')
     for line in in_file:
         if line.startswith('<'): continue
         line = line.strip().lower()
@@ -497,7 +497,7 @@ def read_all_sentences(inpath):
 
 def read_sparse_features(inpath, threshold=0.0):
     sparse_features = []
-    in_file = file(inpath, 'rt')
+    in_file = open(inpath, 'rt')
     for line in in_file:
         line = line.strip().lower()
         items = re.split('\t', line)
