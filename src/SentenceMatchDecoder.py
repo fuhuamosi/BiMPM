@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-from __future__ import print_function
+
 import argparse
-from vocab_utils import Vocab
-import namespace_utils
+from .vocab_utils import Vocab
+from . import namespace_utils
 
 import tensorflow as tf
-import SentenceMatchTrainer
-from SentenceMatchModelGraph import SentenceMatchModelGraph
+from . import SentenceMatchTrainer
+from .SentenceMatchModelGraph import SentenceMatchModelGraph
 
 tf.logging.set_verbosity(tf.logging.ERROR)  # DEBUG, INFO, WARN, ERROR, and FATAL
 
