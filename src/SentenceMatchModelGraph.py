@@ -1,6 +1,6 @@
 import tensorflow as tf
-import src.my_rnn as my_rnn
-import src.match_utils as match_utils
+import my_rnn as my_rnn
+import match_utils as match_utils
 import tensorflow.contrib as contrib
 
 

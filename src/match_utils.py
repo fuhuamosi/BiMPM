@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.python.ops import rnn
-import src.my_rnn as my_rnn
+import my_rnn as my_rnn
 
 eps = 1e-6
 

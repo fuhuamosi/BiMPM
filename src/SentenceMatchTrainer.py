@@ -7,10 +7,10 @@ import time
 import re
 import tensorflow as tf
 
-from src.vocab_utils import Vocab
-from src.SentenceMatchDataStream import SentenceMatchDataStream
-from src.SentenceMatchModelGraph import SentenceMatchModelGraph
-import src.namespace_utils as namespace_utils
+from vocab_utils import Vocab
+from SentenceMatchDataStream import SentenceMatchDataStream
+from SentenceMatchModelGraph import SentenceMatchModelGraph
+import namespace_utils as namespace_utils
 
 FLAGS = None
 
