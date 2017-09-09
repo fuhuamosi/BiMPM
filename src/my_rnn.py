@@ -86,7 +86,7 @@ def _dynamic_rnn_loop(cell, inputs, initial_state, parallel_iterations, swap_mem
     # Prepare dynamic conditional copying of state & output
     def _create_zero_arrays(size):
         size = _state_size_with_prefix(size, prefix=[batch_size])
-        return array_ops.zeros(array_ops.pack(size), rnn._infer_state_dtype(dtype, state))
+        return array_ops.zeros(array_ops.stack(size), rnn._infer_state_dtype(dtype, state))
 
     flat_zero_output = tuple(_create_zero_arrays(output) for output in flat_output_size)
     zero_output = nest.pack_sequence_as(structure=cell.output_size, flat_sequence=flat_zero_output)
@@ -446,7 +446,7 @@ def dynamic_rnn(cell, inputs, sequence_length=None, initial_state=None,
 
         def _assert_has_shape(x, shape):
             x_shape = array_ops.shape(x)
-            packed_shape = array_ops.pack(shape)
+            packed_shape = array_ops.stack(shape)
             return control_flow_ops.Assert(
                 math_ops.reduce_all(math_ops.equal(x_shape, packed_shape)),
                 ["Expected shape for Tensor %s is " % x.name,
