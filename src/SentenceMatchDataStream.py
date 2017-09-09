@@ -43,7 +43,7 @@ class SentenceMatchDataStream(object):
                  isShuffle=False, isLoop=False, isSort=True, max_char_per_word=10,
                  max_sent_length=200):
         instances = []
-        infile = open(inpath, 'rt')
+        infile = open(inpath, 'rt', encoding='utf-8')
         for line in infile:
             line = line.strip()
             if line.startswith('-'): continue
